@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/db";
 import AdminCreateQuoteForm from "@/components/AdminCreateQuoteForm";
 import { DollarSign, FileText, Calendar, ShieldCheck, AlertCircle } from "lucide-react";

@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { getLocale } from "@/lib/locale";
 import { translations } from "@/lib/translations";
 import { getUserSession } from "@/lib/auth";

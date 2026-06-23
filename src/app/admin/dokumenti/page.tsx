@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/db";
 import { Folder, Download, Calendar, ShieldCheck, FileText, User } from "lucide-react";
 

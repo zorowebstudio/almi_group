@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/db";
 import { createFAQ, createKnowledgeArticle } from "@/app/portal/actions";
 import { BookOpen, HelpCircle, PlusCircle, Globe, ChevronRight } from "lucide-react";

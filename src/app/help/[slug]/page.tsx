@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getLocale } from "@/lib/locale";
@@ -16,18 +17,23 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
   const locale = await getLocale();
   const isBg = locale === "bg";
 
-  const article = await prisma.knowledgeArticle.findUnique({
-    where: { slug },
-  });
+  try {
+    const article = await prisma.knowledgeArticle.findUnique({
+      where: { slug },
+    });
 
-  if (!article) return {};
+    if (!article) return {};
 
-  return {
-    title: `${isBg ? article.titleBg : article.titleEn} | Алми Груп ООД`,
-    description: isBg 
-      ? article.contentBg.slice(0, 150) + "..." 
-      : article.contentEn.slice(0, 150) + "...",
-  };
+    return {
+      title: `${isBg ? article.titleBg : article.titleEn} | Алми Груп ООД`,
+      description: isBg
+        ? article.contentBg.slice(0, 150) + "..."
+        : article.contentEn.slice(0, 150) + "...",
+    };
+  } catch {
+    // Database unavailable during build — return minimal metadata gracefully
+    return {};
+  }
 }
 
 export default async function HelpArticlePage({ params }: ArticlePageProps) {

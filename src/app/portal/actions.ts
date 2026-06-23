@@ -384,7 +384,7 @@ export async function updateProfile(formData: {
   if (!session) return { success: false, error: "Unauthorized" };
 
   try {
-    const updateData: any = {
+    const updateData: { name: string; phone: string | null; languagePreference: string; passwordHash?: string } = {
       name: formData.name,
       phone: formData.phone || null,
       languagePreference: formData.languagePreference,
@@ -404,7 +404,7 @@ export async function updateProfile(formData: {
       id: updatedUser.id,
       email: updatedUser.email,
       name: updatedUser.name,
-      role: updatedUser.role as any,
+      role: updatedUser.role as "CUSTOMER_PRIVATE" | "CUSTOMER_COMPANY" | "TECHNICIAN" | "ADMIN",
       companyId: session.companyId,
       languagePreference: updatedUser.languagePreference,
     });

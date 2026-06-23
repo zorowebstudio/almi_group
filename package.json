@@ -3,10 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+
     "dev": "next dev",
-    "build": "next build",
+
+    "build": "prisma generate && next build",
+    "db:setup": "prisma db push && node prisma/seed.js",
+
     "start": "next start",
+
     "lint": "eslint"
+
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

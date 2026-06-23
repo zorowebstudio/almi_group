@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Алми Груп ООД — IT Support Platform
 
-## Getting Started
+Production-quality IT support web application built with Next.js 16, Prisma, and TailwindCSS v4.
 
-First, run the development server:
+## Local Development Setup
+
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure environment
+
+```bash
+cp .env.example .env
+# Edit .env if needed (defaults work for local SQLite development)
+```
+
+### 3. Initialize the local database (SQLite)
+
+```bash
+npm run db:setup
+# Runs: prisma db push && node prisma/seed.js
+```
+
+### 4. Start the development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deploy to Vercel
 
-## Learn More
+### Required Environment Variables
 
-To learn more about Next.js, take a look at the following resources:
+Set these in your Vercel project dashboard under **Settings → Environment Variables**:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Variable | Required | Description |
+|---|---|---|
+| `DATABASE_URL` | ✅ Yes | PostgreSQL connection string (see below) |
+| `JWT_SECRET` | ✅ Yes | Min 32-char random string |
+| `NEXT_PUBLIC_SITE_URL` | ✅ Yes | Your production domain |
+| `RESEND_API_KEY` | Optional | Email sending via Resend API |
+| `EMAIL_FROM` | Optional | Sender email address |
+| `ADMIN_NOTIFICATION_EMAIL` | Optional | Admin alert recipient |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Database for Production
 
-## Deploy on Vercel
+This project uses **SQLite locally** and requires a **hosted PostgreSQL** for Vercel:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Create a PostgreSQL database (Vercel Postgres, Neon, Supabase, or PlanetScale)
+2. Update `DATABASE_URL` in Vercel environment variables
+3. Change `provider = "sqlite"` → `provider = "postgresql"` in `prisma/schema.prisma`
+4. Run migrations: `npx prisma migrate deploy` (or `prisma db push` for a first deploy)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Build Command
+
+The Vercel build command is set automatically from `package.json`:
+
+```
+prisma generate && next build
+```
+
+> ⚠️ `prisma db push` is intentionally **not** run at build time to prevent accidental schema changes in production. Run migrations manually before deploying.
+
+---
+
+## Available Scripts
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Start development server |
+| `npm run build` | Production build (generates Prisma client) |
+| `npm run db:setup` | Init local SQLite DB and seed demo data |
+| `npm run lint` | Run ESLint |

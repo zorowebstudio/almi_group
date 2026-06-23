@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import { getUserSession } from "@/lib/auth";
 import { AdminSidebar } from "@/components/AdminSidebar";

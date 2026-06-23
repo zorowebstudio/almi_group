@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
       id: newUser.id,
       email: newUser.email,
       name: newUser.name,
-      role: newUser.role as any,
+      role: newUser.role as "CUSTOMER_PRIVATE" | "CUSTOMER_COMPANY" | "TECHNICIAN" | "ADMIN",
       companyId,
       languagePreference: newUser.languagePreference,
     };

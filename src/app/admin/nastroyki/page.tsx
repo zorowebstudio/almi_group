@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/db";
 import AdminSettingsForm from "@/components/AdminSettingsForm";
 import { Settings } from "lucide-react";

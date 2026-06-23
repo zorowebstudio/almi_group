@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { getLocale } from "@/lib/locale";
 import { translations } from "@/lib/translations";
@@ -16,7 +17,12 @@ export default async function HelpCenterPage({ searchParams }: HelpPageProps) {
   const { q: query, cat: category } = await searchParams;
 
   // 1. Fetch articles from DB based on parameters
-  const whereClause: any = { isPublished: true };
+  type ArticleWhere = {
+    isPublished: boolean;
+    category?: string;
+    OR?: Array<{ titleBg?: { contains: string }; titleEn?: { contains: string }; contentBg?: { contains: string }; contentEn?: { contains: string } }>;
+  };
+  const whereClause: ArticleWhere = { isPublished: true };
   if (category && category !== "ALL") {
     whereClause.category = category;
   }

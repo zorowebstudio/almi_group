@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { redirect, notFound } from "next/navigation";
 import { getLocale } from "@/lib/locale";
 import { translations } from "@/lib/translations";

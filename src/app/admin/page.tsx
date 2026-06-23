@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { 
   FileText, Users, DollarSign, Activity, 
@@ -158,29 +160,29 @@ export default async function AdminDashboard() {
             <h3 className="text-xs font-bold text-slate-450 uppercase tracking-wider">Бързи административни връзки</h3>
             
             <div className="grid grid-cols-1 gap-2.5">
-              <a 
+              <Link 
                 href="/admin/zayavki" 
                 className="flex justify-between items-center p-3 bg-slate-900 border border-slate-850 hover:border-slate-700 rounded-lg text-slate-300 hover:text-white transition-all font-bold group"
               >
                 <span>Разпредели и отговори на заявки</span>
                 <Clock className="h-4 w-4 text-cyan-400 group-hover:text-white transition-all" />
-              </a>
+              </Link>
 
-              <a 
+              <Link 
                 href="/admin/oferti" 
                 className="flex justify-between items-center p-3 bg-slate-900 border border-slate-850 hover:border-slate-700 rounded-lg text-slate-300 hover:text-white transition-all font-bold group"
               >
                 <span>Изготви ценова оферта</span>
                 <DollarSign className="h-4 w-4 text-cyan-400 group-hover:text-white transition-all" />
-              </a>
+              </Link>
 
-              <a 
+              <Link 
                 href="/admin/sadarzhanie" 
                 className="flex justify-between items-center p-3 bg-slate-900 border border-slate-850 hover:border-slate-700 rounded-lg text-slate-300 hover:text-white transition-all font-bold group"
               >
                 <span>Редактирай FAQ и статии</span>
                 <FileText className="h-4 w-4 text-cyan-400 group-hover:text-white transition-all" />
-              </a>
+              </Link>
             </div>
           </div>
         </div>
