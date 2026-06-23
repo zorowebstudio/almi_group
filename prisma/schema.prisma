@@ -1,0 +1,335 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                 String          @id @default(uuid())
+  email              String          @unique
+  passwordHash       String
+  name               String
+  role               String          // "CUSTOMER_PRIVATE", "CUSTOMER_COMPANY", "TECHNICIAN", "ADMIN"
+  languagePreference String          @default("bg") // "bg", "en"
+  phone              String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  companyMemberships CompanyMember[]
+  addresses          Address[]
+  devices            Device[]
+  tickets            Ticket[]        @relation("CustomerTickets")
+  assignedTickets    Ticket[]        @relation("TechnicianTickets")
+  appointments       Appointment[]   @relation("CustomerAppointments")
+  assignedVisits     Appointment[]   @relation("TechnicianAppointments")
+  documents          Document[]
+  chats              ChatConversation[]
+  notifications      Notification[]
+  auditLogs          AuditLog[]
+}
+
+model Company {
+  id          String          @id @default(uuid())
+  name        String
+  eik         String?
+  billingInfo String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  members     CompanyMember[]
+  addresses   Address[]
+  devices     Device[]
+  tickets     Ticket[]
+  quotes      Quote[]
+  documents   Document[]
+}
+
+model CompanyMember {
+  id        String   @id @default(uuid())
+  userId    String
+  companyId String
+  role      String   // "OWNER", "ADMIN", "MEMBER"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, companyId])
+}
+
+model Address {
+  id         String   @id @default(uuid())
+  companyId  String?
+  userId     String?
+  title      String   // "Home", "Office Sofia", etc.
+  street     String
+  city       String   @default("София")
+  postalCode String?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  company    Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Device {
+  id             String          @id @default(uuid())
+  companyId      String?
+  userId         String?
+  nickname       String
+  type           String          // "DESKTOP", "LAPTOP", "ROUTER", "PRINTER", "SERVER", "OTHER"
+  brand          String?
+  model          String?
+  serialNumber   String?
+  os             String?
+  purchaseDate   DateTime?
+  notes          String?
+  isNetworkAsset Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  company        Company?        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user           User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attachments    Attachment[]
+}
+
+model Ticket {
+  id                  String          @id @default(uuid())
+  ticketNumber        String          @unique // e.g. ALMI-2026-0001
+  customerId          String?
+  companyId           String?
+  name                String          // Customer Name (for Guest requests)
+  email               String
+  phone               String
+  clientType          String          // "PRIVATE", "COMPANY"
+  category            String          // "HARDWARE", "SOFTWARE", "NETWORK", "SECURITY", "OTHER"
+  service             String          // "it-poddrazhka-za-firmi", "remont-na-kompyutri", etc.
+  deviceType          String?
+  deviceRef           String?
+  os                  String?
+  subject             String
+  description         String
+  urgency             String          // "LOW", "NORMAL", "HIGH", "CRITICAL"
+  priority            String          // "LOW", "NORMAL", "HIGH", "EMERGENCY"
+  contactMethod       String          // "EMAIL", "PHONE"
+  supportMethod       String          // "REMOTE", "ON_SITE", "OFFICE"
+  preferredDate       String?
+  preferredTime       String?
+  address             String?
+  status              String          @default("RECEIVED") // "RECEIVED", "PENDING_REVIEW", "NEED_INFO", "SCHEDULED", "DIAGNOSING", "AWAITING_CONFIRMATION", "IN_PROGRESS", "READY", "COMPLETED", "CANCELLED"
+  assignedTechnicianId String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  customer            User?           @relation("CustomerTickets", fields: [customerId], references: [id], onDelete: SetNull)
+  company             Company?        @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  technician          User?           @relation("TechnicianTickets", fields: [assignedTechnicianId], references: [id], onDelete: SetNull)
+  timeline            TicketStatusHistory[]
+  messages            TicketMessage[]
+  internalNotes       InternalNote[]
+  attachments         Attachment[]
+  appointments        Appointment[]
+  quotes              Quote[]
+}
+
+model TicketStatusHistory {
+  id          String   @id @default(uuid())
+  ticketId    String
+  oldStatus   String
+  newStatus   String
+  changedById String?  // User ID who changed it
+  notes       String?
+  createdAt   DateTime @default(now())
+  ticket      Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+}
+
+model TicketMessage {
+  id          String       @id @default(uuid())
+  ticketId    String
+  senderId    String?      // Null if guest, otherwise User ID
+  senderName  String
+  message     String
+  isInternal  Boolean      @default(false) // If true, only technicians/admins can see it
+  createdAt   DateTime     @default(now())
+  ticket      Ticket       @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  attachments Attachment[]
+}
+
+model InternalNote {
+  id          String   @id @default(uuid())
+  ticketId    String
+  changedById String?
+  notes       String
+  createdAt   DateTime @default(now())
+  ticket      Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+}
+
+model Attachment {
+  id              String         @id @default(uuid())
+  ticketId        String?
+  deviceId        String?
+  ticketMessageId String?
+  filename        String
+  filePath        String
+  fileType        String
+  fileSize        Int
+  createdAt       DateTime       @default(now())
+  ticket          Ticket?        @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  device          Device?        @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  ticketMessage   TicketMessage? @relation(fields: [ticketMessageId], references: [id], onDelete: Cascade)
+}
+
+model Appointment {
+  id                   String   @id @default(uuid())
+  ticketId             String?
+  customerId           String?
+  serviceType          String   // "CONSULTATION", "REMOTE", "ON_SITE", "DROP_OFF"
+  date                 DateTime
+  timeSlot             String   // "09:00-10:00", etc.
+  durationMinutes      Int      @default(60)
+  locationType         String   // "REMOTE", "ON_SITE", "OFFICE"
+  address              String?
+  status               String   @default("PENDING") // "PENDING", "CONFIRMED", "RESCHEDULED", "CANCELLED", "COMPLETED"
+  notes                String?
+  assignedTechnicianId String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  ticket               Ticket?  @relation(fields: [ticketId], references: [id], onDelete: SetNull)
+  customer             User?    @relation("CustomerAppointments", fields: [customerId], references: [id], onDelete: Cascade)
+  technician           User?    @relation("TechnicianAppointments", fields: [assignedTechnicianId], references: [id], onDelete: SetNull)
+}
+
+model Quote {
+  id             String      @id @default(uuid())
+  quoteNumber    String      @unique // e.g. ALMI-Q-2026-0001
+  customerId     String?
+  companyId      String?
+  ticketId       String?
+  status         String      @default("DRAFT") // "DRAFT", "SENT", "VIEWED", "ACCEPTED", "DECLINED", "EXPIRED"
+  issueDate      DateTime    @default(now())
+  expiryDate     DateTime
+  notes          String?
+  terms          String?
+  totalAmount    Float?      // Demo/example values
+  taxAmount      Float?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  company        Company?    @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  ticket         Ticket?     @relation(fields: [ticketId], references: [id], onDelete: SetNull)
+  items          QuoteItem[]
+}
+
+model QuoteItem {
+  id          String   @id @default(uuid())
+  quoteId     String
+  description String
+  quantity    Float    @default(1.0)
+  unit        String   @default("бр.") // Unit: hours, pieces
+  unitPrice   Float
+  lineTotal   Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  quote       Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+}
+
+model Document {
+  id        String   @id @default(uuid())
+  companyId String?
+  userId    String?
+  category  String   // "OFFER", "DIAGNOSTIC_REPORT", "SERVICE_PROTOCOL", "INVOICE", "ATTACHMENT"
+  title     String
+  fileUrl   String
+  uploadedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ChatConversation {
+  id             String        @id @default(uuid())
+  userId         String?       // Null for guests
+  guestSessionId String?       // Session ID for anonymous chats
+  subject        String?
+  status         String        @default("ACTIVE") // "ACTIVE", "SNOOZED", "CLOSED"
+  assignedToId   String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  messages       ChatMessage[]
+}
+
+model ChatMessage {
+  id             String           @id @default(uuid())
+  conversationId String
+  senderId       String?          // Null if guest / bot
+  senderName     String
+  message        String
+  createdAt      DateTime         @default(now())
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+model FAQItem {
+  id          String   @id @default(uuid())
+  category    String   // "GENERAL", "TICKETS", "REPAIRS", "REMOTE", "BUSINESS", "BOOKINGS", "QUOTES", "SECURITY"
+  questionBg  String
+  questionEn  String
+  answerBg    String
+  answerEn    String
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model KnowledgeArticle {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  category    String   // "COMPUTERS", "WINDOWS", "NETWORK", "PRINTERS", "SOFTWARE", "EMAIL", "BACKUP", "SECURITY", "BUSINESS"
+  titleBg     String
+  titleEn     String
+  contentBg   String
+  contentEn   String
+  readingTime Int      @default(5)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String   // "TICKETS", "MESSAGES", "APPOINTMENTS", "DOCUMENTS", "SYSTEM"
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  details   String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model SiteSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique // e.g. "business_email", "working_hours_bg"
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model ConsentRecord {
+  id          String   @id @default(uuid())
+  sessionId   String   @unique
+  userId      String?
+  necessary   Boolean  @default(true)
+  preferences Boolean  @default(false)
+  analytics   Boolean  @default(false)
+  marketing   Boolean  @default(false)
+  updatedAt   DateTime @updatedAt
+}
